@@ -23,6 +23,13 @@
 /* #include "file_io.h"  */
 /* #include "command.h"  */
 
+typedf struct Student {
+    int id;
+    char name[23];
+    int score;
+    struct Student* next;
+} Student;
+
 /* ---------------------------------------------------------------
  * TODO: Implement the interactive shell loop.
  *   - Print a prompt and read a line from stdin.

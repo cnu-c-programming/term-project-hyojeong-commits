@@ -23,13 +23,31 @@
 /* #include "file_io.h"  */
 /* #include "command.h"  */
 
-typedf struct Student {
+typedef struct Student {
     int id;
     char name[23];
     int score;
     struct Student* next;
 } Student;
 
+void add(int id, char* name, int score){
+    Student* new_student = (Student*)malloc(sizeof(Student));
+    new_student->id = id;
+    new_student->score = score;
+    strcpy(new_student->name, name);
+    new_student->next = NULL;
+
+    if (head == NULL) {
+        head = new_student;
+        return;
+    }
+
+    Student* temp = head;
+    while (temp->next != NULL) {
+        temp = temp->next;
+    }
+    temp->next = new_student;
+}
 /* ---------------------------------------------------------------
  * TODO: Implement the interactive shell loop.
  *   - Print a prompt and read a line from stdin.

@@ -30,6 +30,9 @@ typedef struct Student {
     struct Student* next;
 } Student;
 
+Student* head = NULL;
+char csv_filename[256] = "students.csv";
+
 void add(int id, char* name, int score){
     Student* new_student = (Student*)malloc(sizeof(Student));
     new_student->id = id;
@@ -47,6 +50,96 @@ void add(int id, char* name, int score){
         temp = temp->next;
     }
     temp->next = new_student;
+}
+
+Student* find(int id) {
+    Student* temp = head;
+    while (temp != NULL) {
+        if (temp->id == id) return temp;
+        temp = temp->next;
+    }
+    return NULL;
+}
+
+int delete(int id) {
+    if (head == NULL) {
+        return 0; 
+    }
+    
+    if (head->id == id) {
+        Student *delh = head;    
+        head = head->next;      
+        free(delh);           
+        return 1;     
+    }
+
+    Student *p = head; 
+    while (1) {
+        if (p->next == NULL) {
+            break; 
+        }
+        
+        if (p->next->id == id) {
+            Student *de = p->next;             
+            p->next = de->next;     
+            free(de);               
+            return 1; 
+        }
+        p = p->next;
+    }
+    
+    return 0; 
+}
+int load_csv(const char* filename) {
+    FILE* fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("Error: cannot open file\n");
+        return -1;
+    }
+
+    char header[256];
+    
+    if (fgets(header, sizeof(header), fp) == NULL) {
+        fclose(fp);
+        return -1;
+    }
+
+    int count = 0;
+    char line[256];
+
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        int id, score;
+        char name[32];
+        int result = sscanf(line, "%d,%[^,],%d", &id, name, &score);
+        add_to_list(id, name, score);
+        count++;
+    }
+
+    fclose(fp);
+    return count;
+}
+
+int save_csv(const char* filename) {
+    FILE* fp = fopen(filename, "w");
+    if (fp == NULL) {
+        printf("Error: cannot write to file\n"); 
+        return -1;
+    }
+
+    fprintf(fp, "id,name,score\n");
+
+    int count = 0;
+    Student* temp = head;
+    while (temp != NULL) {
+  
+        fprintf(fp, "%d,%s,%d\n", temp->id, temp->name, temp->score);
+        
+        count++;
+        temp = temp->next;
+    }
+
+    fclose(fp);
+    return count;
 }
 /* ---------------------------------------------------------------
  * TODO: Implement the interactive shell loop.

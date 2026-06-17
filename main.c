@@ -1,37 +1,18 @@
-/*
- * main.c  –  Mini Student Shell
- *
- * TODO: Implement admin_shell and client_shell.
- *
- * Build:
- *   make admin   →  admin_shell  (compiled with -DADMIN_MODE)
- *   make client  →  client_shell (compiled with -DCLIENT_MODE)
- *
- * Usage:
- *   ./admin_shell [students.csv]
- *   ./admin_shell -f commands.txt [students.csv]
- *   ./client_shell [students.csv]
- *   ./client_shell -f commands.txt [students.csv]
- */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* TODO: Add your own header includes here */
-/* #include "student.h"  */
-/* #include "file_io.h"  */
-/* #include "command.h"  */
 
 typedef struct Student {
     int id;
-    char name[23];
+    char name[32]; 
     int score;
     struct Student* next;
 } Student;
 
 Student* head = NULL;
-char csv_filename[256] = "students.csv"; //여기도 수정필요
+char csv_filename[256] = "students.csv";
 
 void add_to_list(int id, char* name, int score) {
     Student* new_student = (Student*)malloc(sizeof(Student));
@@ -40,7 +21,6 @@ void add_to_list(int id, char* name, int score) {
     new_student->id = id;
     new_student->score = score;
     strncpy(new_student->name, name, 31);
-    new_student->name[31] = '\0';
     new_student->next = NULL;
 
     if (head == NULL) {
@@ -54,6 +34,7 @@ void add_to_list(int id, char* name, int score) {
     }
     temp->next = new_student;
 }
+
 Student* find_by_id(int id) {
     Student* temp = head;
     while (temp != NULL) {
@@ -64,34 +45,25 @@ Student* find_by_id(int id) {
 }
 
 int remove_student(int id) {
-    if (head == NULL) {
-        return 0; 
-    }
-    
-    if (head->id == id) {
-        Student *delh = head;    
-        head = head->next;      
-        free(delh);           
-        return 1;     
-    }
-
-    Student *p = head; 
-    while (1) {
-        if (p->next == NULL) {
-            break; 
+    Student* temp = head;
+    Student* prev = NULL;
+ 
+    while (temp != NULL) {
+        if (temp->id == id) {
+            if (prev == NULL) {
+                head = temp->next;
+            } else {
+                prev->next = temp->next;
+            }
+            free(temp);
+            return 1;
         }
-        
-        if (p->next->id == id) {
-            Student *de = p->next;             
-            p->next = de->next;     
-            free(de);               
-            return 1; 
-        }
-        p = p->next;
+        prev = temp;
+        temp = temp->next;
     }
-    
-    return 0; 
+    return 0;
 }
+
 void free_all() {
     Student* temp = head;
     while (temp != NULL) {
@@ -102,10 +74,12 @@ void free_all() {
     head = NULL;
 }
 
+
+
 int load_csv(const char* filename) {
     FILE* fp = fopen(filename, "r");
     if (fp == NULL) {
-        printf("Error: cannot open file\n");
+        printf("Cannot open file\n");
         return -1;
     }
 
@@ -118,12 +92,12 @@ int load_csv(const char* filename) {
     int count = 0;
     char line[256];
 
-   while (fgets(line, sizeof(line), fp) != NULL) { 
+    while (fgets(line, sizeof(line), fp) != NULL) { 
         char* tok_id = strtok(line, ",\r\n");
         char* tok_name = strtok(NULL, ",\r\n");
         char* tok_score = strtok(NULL, ",\r\n");
 
-       if (tok_id && tok_name && tok_score) {
+        if (tok_id && tok_name && tok_score) {
             int id = atoi(tok_id);
             int score = atoi(tok_score);
             add_to_list(id, tok_name, score);
@@ -138,7 +112,7 @@ int load_csv(const char* filename) {
 int save_csv(const char* filename) {
     FILE* fp = fopen(filename, "w");
     if (fp == NULL) {
-        printf("Error: cannot write to file\n"); 
+        printf("Cannot write file\n"); 
         return -1;
     }
 
@@ -147,9 +121,7 @@ int save_csv(const char* filename) {
     int count = 0;
     Student* temp = head;
     while (temp != NULL) {
-  
         fprintf(fp, "%d,%s,%d\n", temp->id, temp->name, temp->score);
-        
         count++;
         temp = temp->next;
     }
@@ -157,32 +129,30 @@ int save_csv(const char* filename) {
     fclose(fp);
     return count;
 }
-* --------------------------------------------------------------- */
+
+
 void cmd_list() {
     Student* temp;
     if (head == NULL) {
         printf("No students found.\n");
         return;
     }
-    printf("ID       Name                 Score\n");
+    printf("ID     Name               Score\n");
     temp = head;
     while (temp != NULL) {
-        printf("%-8d %-20s %d\n", temp->id, temp->name, temp->score);
+        printf("%d %s %d\n", temp->id, temp->name, temp->score);
         temp = temp->next;
     }
 }
 
 void cmd_find(char* args) {
-    int id;
-    Student* s;
-
     if (args == NULL || strlen(args) == 0) {
         printf("Error: missing argument.\n");
         return;
     }
 
-    id = atoi(args);
-    s = find_by_id(id);
+    int id = atoi(args);
+    Student* s = find_by_id(id);
     if (s == NULL) {
         printf("Error: student not found.\n");
         return;
@@ -192,7 +162,7 @@ void cmd_find(char* args) {
 }
 
 void cmd_stats() {
-    int count = 0, sum = 0, max = -1, min = 101;
+    int count = 0, sum = 0, max, min;
     Student* temp;
 
     if (head == NULL) {
@@ -201,6 +171,9 @@ void cmd_stats() {
     }
 
     temp = head;
+    max = temp->score;
+    min = temp->score;
+
     while (temp != NULL) {
         count++;
         sum += temp->score;
@@ -216,39 +189,38 @@ void cmd_stats() {
 } 
 
 void cmd_reload() {
-    int n;
     free_all();
-    n = load_csv(csv_filename);
-    if (n < 0) return;
+    int n = load_csv(csv_filename);
     printf("Reloaded %d students from %s.\n", n, csv_filename);
 }
 
 void cmd_help() {
     printf("Commands:\n");
 #ifdef ADMIN_MODE
-    printf("  save                     Save students to CSV\n");
-    printf("  reload                   Reload students from CSV\n");
-    printf("  add <id> <name> <score>  Add a student\n");
-    printf("  delete <id>              Delete a student\n");
-    printf("  update <id> <score>      Update student score\n");
+    printf("save                     Save students to CSV\n");
+    printf("reload                   Reload students from CSV\n");
+    printf("add <id> <name> <score>  Add a student\n");
+    printf("delete <id>              Delete a student\n");
+    printf("update <id> <score>      Update student score\n");
 #else
-    printf("  reload                   Reload students from CSV\n");
+    printf("reload                   Reload students from CSV\n");
 #endif
-    printf("  find <id>                Find student by ID\n");
-    printf("  list                     List all students\n");
-    printf("  stats                    Show statistics\n");
-    printf("  help                     Show this help\n");
-    printf("  clear                    Clear screen\n");
-    printf("  exit                     Exit program\n");
+    printf("find <id>                Find student by ID\n");
+    printf("list                     List all students\n");
+    printf("stats                    Show statistics\n");
+    printf("help                     Show this help\n");
+    printf("clear                    Clear screen\n");
+    printf("exit                     Exit program\n");
 }
 
 #ifdef ADMIN_MODE
 
 void cmd_add(char* args) {
-   if (args == NULL || strlen(args) == 0) {
+    if (args == NULL || strlen(args) == 0) {
         printf("Error: missing arguments.\n");
         return;
     }
+
     char* tok_id = strtok(args, " \r\n");
     char* tok_name = strtok(NULL, " \r\n");
     char* tok_score = strtok(NULL, " \r\n");
@@ -264,16 +236,19 @@ void cmd_add(char* args) {
         return;
     }
 
+    if (find_by_id(id) != NULL) {
+        printf("Error: duplicate ID.\n");
+        return;
+    }
+
     int score = atoi(tok_score);
     if (score < 0 || score > 100) {
         printf("Error: score out of range (0-100).\n");
         return;
     }
 
-    if (find_by_id(id) != NULL) {
-        printf("Error: duplicate ID.\n");
-        return;
-    }
+    
+
     add_to_list(id, tok_name, score);
     printf("Student added.\n");
 }
@@ -315,6 +290,11 @@ void cmd_update(char* args) {
     int id = atoi(tok_id);
     int score = atoi(tok_score);
 
+     if (find_by_id(id) == NULL) {
+        printf("Error: student not found.\n");
+        return;
+    }
+    
     if (score < 0 || score > 100) {
         printf("Error: score out of range (0-100).\n");
         return;
@@ -335,18 +315,22 @@ void cmd_save() {
     if (n < 0) return;
     printf("Saved %d students to %s.\n", n, csv_filename);
 }
-/* ---------------------------------------------------------------
- * TODO: Implement the interactive shell loop.
- *   - Print a prompt and read a line from stdin.
- *   - Parse the line into a command and arguments.
- *   - Dispatch to the appropriate handler function.
- *   - Loop until the user types "exit" or EOF.
- * --------------------------------------------------------------- */
-void run_command(char* line) {
-    char* cmd = strtok(line, " \r\n");
-    if (cmd == NULL) return;
 
-    char* args_ptr = strtok(NULL, ""); 
+#endif /* ADMIN_MODE */
+
+/* ---------------------------------------------------------------
+ * 메인 쉘 명령어 분석 및 실행 루프
+ * --------------------------------------------------------------- */
+
+void run_command(char* line) {
+    char* cmd =strtok(line, " \r\n");
+    if (cmd ==NULL) return;
+
+    char* args_ptr =NULL;
+    char* space= strchr(line, ' ');
+    if (space!=NULL) {
+        args_ptr= space + 1;
+    }
 
     if (strcmp(cmd, "list") == 0) {
         cmd_list();
@@ -399,33 +383,29 @@ void run_command_file(const char *cmd_file, const char *csv_path) {
     FILE* fp = fopen(cmd_file, "r");
     char line[512];
     int lineno = 0;
-    (void)csv_path; 
-
+ 
     if (fp == NULL) {
         perror("Error: cannot open command file");
         run_shell(csv_path);
         return;
     }
-
+ 
     while (fgets(line, sizeof(line), fp) != NULL) {
         lineno++;
-        
+ 
         if (line[0] == '\n' || line[0] == '\r' || line[0] == '#') continue;
-
-        char print_line[512];
-        strcpy(print_line, line);
-        print_line[strcspn(print_line, "\r\n")] = '\0';
-        
-        if (strlen(print_line) == 0) continue;
-
-        printf("[command file:%d] %s\n", lineno, print_line);
+ 
+        line[strcspn(line, "\r\n")] = '\0';
+ 
+        if (strlen(line) == 0) continue;
+ 
+        printf("[command file:%d] %s\n", lineno, line);
         run_command(line);
     }
-
+ 
     fclose(fp);
     run_shell(csv_path);
 }
-
 int main(int argc, char *argv[]) {
     const char *csv_path  = "students.csv"; 
     const char *cmd_file  = NULL;           
@@ -450,7 +430,7 @@ int main(int argc, char *argv[]) {
 
     strcpy(csv_filename, csv_path);
     n = load_csv(csv_path);
-    if (n < 0) n = 0;
+    if (n <0) n =0;
 
 #ifdef ADMIN_MODE
     printf("[Admin Program]\nLoaded %d students from %s.\n", n, csv_path);

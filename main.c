@@ -245,27 +245,10 @@ void cmd_help() {
 #ifdef ADMIN_MODE
 
 void cmd_add(char* args) {
-    char s_id[32], s_name[32], s_score[32];
-    int id, score;
-    int parsed;
-
-    if (args == NULL || strlen(args) == 0) {
+   if (args == NULL || strlen(args) == 0) {
         printf("Error: missing arguments.\n");
         return;
     }
-
-    parsed = sscanf(args, "%s %s %s", s_id, s_name, s_score);
-    if (parsed < 3) {
-        printf("Error: missing arguments.\n");
-        return;
-    }
-
-    id = atoi(s_id);
-    if (id <= 0) {
-        printf("Error: invalid ID.\n");
-        return;
-    }
-
     char* tok_id = strtok(args, " \r\n");
     char* tok_name = strtok(NULL, " \r\n");
     char* tok_score = strtok(NULL, " \r\n");
@@ -291,7 +274,6 @@ void cmd_add(char* args) {
         printf("Error: duplicate ID.\n");
         return;
     }
-
     add_to_list(id, tok_name, score);
     printf("Student added.\n");
 }

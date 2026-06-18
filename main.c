@@ -444,6 +444,5 @@ int main(int argc, char *argv[]) {
 #error "Define either -DADMIN_MODE or -DCLIENT_MODE when compiling."
 #endif
 
-    free_all();
     return 0;
 }
